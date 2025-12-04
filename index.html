@@ -1,0 +1,432 @@
+import React, { useState, useEffect } from 'react';
+import { ClipboardCheck, RefreshCw, Pill, ArrowRight, ArrowLeft, Check, X, Clock, SkipForward, Power } from 'lucide-react';
+
+// Base de dados completa com as 50 questões
+const questionsData = [
+    { id: 1, tema: "Princípios Gerais", dificuldade: "Fácil", pergunta: "Diferencie fármaco, droga e medicamento segundo a farmacologia.", alternativas: { A: "Fármaco é qualquer substância química; droga é medicamento; medicamento é sinônimo de remédio.", B: "Droga é o princípio ativo; fármaco é sempre natural; medicamento é qualquer produto químico.", C: "Droga é qualquer substância que modifica funções; fármaco é substância ativa; medicamento é produto formulado.", D: "Droga é uma substância tóxica; fármaco é um remédio natural; medicamento é só genérico.", E: "Fármaco e droga são sinônimos de medicamento." }, gabarito: "C" },
+    { id: 2, tema: "Princípios Gerais", dificuldade: "Fácil", pergunta: "O que é intercambialidade de medicamentos?", alternativas: { A: "Capacidade de um medicamento substituir outro sem garantia de equivalência.", B: "Troca entre medicamentos de classes diferentes.", C: "Substituição permitida entre referência, genérico ou similar intercambiável.", D: "Troca de medicamento apenas pelo médico.", E: "Troca de medicamento apenas quando há mudança de dose." }, gabarito: "C" },
+    { id: 3, tema: "Princípios Gerais", dificuldade: "Média", pergunta: "Por que medicamentos genéricos são mais baratos que os de referência?", alternativas: { A: "Porque são de baixa qualidade.", B: "Porque utilizam menos princípio ativo.", C: "Porque não possuem custos das etapas de pesquisa e desenvolvimento.", D: "Porque são menos seguros.", E: "Porque não passam por testes de bioequivalência." }, gabarito: "C" },
+    { id: 4, tema: "Princípios Gerais", dificuldade: "Média", pergunta: "Como o farmacêutico decide se é permitida a troca entre referência e similar?", alternativas: { A: "Verificando apenas o nome comercial.", B: "Verificando se consta na lista da ANVISA como similar intercambiável.", C: "Apenas perguntando ao paciente.", D: "Verificando preço mais baixo.", E: "Consultando a bula do genérico." }, gabarito: "B" },
+    { id: 5, tema: "Princípios Gerais", dificuldade: "Difícil", pergunta: "Cite situações em que um similar intercambiável ainda não deve substituir o referência.", alternativas: { A: "Nunca se deve substituir.", B: "Quando o paciente exige o mais caro.", C: "Quando há restrição médica ou características clínicas que exigem formulação específica.", D: "Quando o medicamento é fitoterápico.", E: "Quando o medicamento é administrado por via tópica." }, gabarito: "C" },
+    { id: 6, tema: "Farmacocinética I", dificuldade: "Fácil", pergunta: "O que significa efeito de primeira passagem?", alternativas: { A: "Passagem do fármaco pelos rins antes da ação.", B: "Destruição parcial do fármaco no fígado antes de atingir a circulação sistêmica.", C: "Passagem direta do fármaco para o cérebro.", D: "Absorção imediata sem metabolismo.", E: "Ação do fármaco diretamente no receptor." }, gabarito: "B" },
+    { id: 7, tema: "Farmacocinética I", dificuldade: "Fácil", pergunta: "Cite duas vias parenterais de administração.", alternativas: { A: "Oral e retal.", B: "Sublingual e nasal.", C: "Intramuscular e intravenosa.", D: "Transdérmica e tópica.", E: "Oral e sublingual." }, gabarito: "C" },
+    { id: 8, tema: "Farmacocinética I", dificuldade: "Média", pergunta: "Por que soluções orais têm início de ação mais rápido que comprimidos revestidos?", alternativas: { A: "Porque não precisam ser deglutidas.", B: "Porque já estão dissolvidas e prontas para absorção.", C: "Porque são absorvidas no estômago.", D: "Porque não sofrem primeira passagem.", E: "Porque possuem mais princípio ativo." }, gabarito: "B" },
+    { id: 9, tema: "Farmacocinética I", dificuldade: "Média", pergunta: "Por que diclofenaco tomado em jejum causa dor gástrica?", alternativas: { A: "Porque aumenta pH gástrico.", B: "Porque sofre rápida eliminação renal.", C: "Porque irrita a mucosa gástrica e aumenta risco de lesão.", D: "Porque é absorvido lentamente.", E: "Porque perde eficácia." }, gabarito: "C" },
+    { id: 10, tema: "Farmacocinética I", dificuldade: "Média", pergunta: "Qual a principal diferença entre absorção SC, IM e IV?", alternativas: { A: "SC é mais rápida que IV.", B: "IV não possui fase de absorção.", C: "IM é mais lenta que SC.", D: "IM não pode ser usada para soluções oleosas.", E: "SC é ideal para grandes volumes." }, gabarito: "B" },
+    { id: 11, tema: "Farmacocinética I", dificuldade: "Média", pergunta: "Por que a nitroglicerina não deve ser administrada por via oral convencional?", alternativas: { A: "Porque não é absorvida no intestino.", B: "Porque sofre intensa metabolização de primeira passagem.", C: "Porque causa toxicidade oral.", D: "Porque não dissolve em água.", E: "Porque o estômago inativa receptores." }, gabarito: "B" },
+    { id: 12, tema: "Farmacocinética I", dificuldade: "Média", pergunta: "Qual forma farmacêutica é ideal para fármacos instáveis no estômago?", alternativas: { A: "Comprimido simples.", B: "Solução oral.", C: "Cápsula gelatinosa.", D: "Comprimido revestido entérico.", E: "Gotas sublinguais." }, gabarito: "D" },
+    { id: 13, tema: "Farmacocinética I", dificuldade: "Difícil", pergunta: "Como a obesidade pode alterar farmacocinética de fármacos lipofílicos aplicados IM?", alternativas: { A: "Reduzindo volume de distribuição.", B: "Aumentando absorção imediata.", C: "Aumentando armazenamento no tecido adiposo e retardando ação.", D: "Eliminando o efeito terapêutico.", E: "Impedindo dissolução." }, gabarito: "C" },
+    { id: 14, tema: "Farmacocinética I", dificuldade: "Difícil", pergunta: "Qual o impacto de partir um comprimido de liberação controlada?", alternativas: { A: "Nenhum efeito.", B: "Aumenta segurança.", C: "Liberação imediata e risco de toxicidade.", D: "Melhor absorção.", E: "Inibição total da ação." }, gabarito: "C" },
+    { id: 15, tema: "Farmacocinética II", dificuldade: "Fácil", pergunta: "O que é biotransformação?", alternativas: { A: "Eliminação renal plena.", B: "Conversão química do fármaco no organismo.", C: "Transporte ativo.", D: "Ligação a proteínas plasmáticas.", E: "Processo de absorção no intestino." }, gabarito: "B" },
+    { id: 16, tema: "Farmacocinética II", dificuldade: "Fácil", pergunta: "Qual o principal órgão responsável pelo metabolismo?", alternativas: { A: "Rins", B: "Pulmões", C: "Fígado", D: "Coração", E: "Pele" }, gabarito: "C" },
+    { id: 17, tema: "Farmacocinética II", dificuldade: "Média", pergunta: "Qual a diferença entre reações de fase I e fase II?", alternativas: { A: "Fase I sempre ativa; fase II sempre inativa.", B: "Fase I modifica estrutura; fase II conjuga aumentando solubilidade.", C: "Fase I ocorre nos rins; fase II ocorre no estômago.", D: "Ambas ocorrem apenas em fármacos naturais.", E: "Fase II ocorre antes da fase I." }, gabarito: "B" },
+    { id: 18, tema: "Farmacocinética II", dificuldade: "Média", pergunta: "Por que insuficiência hepática aumenta toxicidade de fármacos?", alternativas: { A: "Aumenta eliminação renal.", B: "Reduz metabolismo e aumenta acúmulo plasmático.", C: "Aumenta primeira passagem.", D: "Inibe excreção biliar.", E: "Aumenta ligação proteica." }, gabarito: "B" },
+    { id: 19, tema: "Farmacocinética II", dificuldade: "Média", pergunta: "Por que insuficiência renal torna aminoglicosídeos perigosos?", alternativas: { A: "Aumenta absorção muscular.", B: "Reduz ligação proteica.", C: "Diminui eliminação e aumenta risco de nefro/ototoxicidade.", D: "Desativa o fármaco.", E: "Aumenta metabolismo hepático." }, gabarito: "C" },
+    { id: 20, tema: "Farmacocinética II", dificuldade: "Difícil", pergunta: "Como a inibição do citocromo P450 pode gerar toxicidade?", alternativas: { A: "Aumentando eliminação renal.", B: "Reduzindo absorção.", C: "Aumentando concentração plasmática do fármaco metabolizado pelo sistema.", D: "Impedindo distribuição.", E: "Aumentando ligação proteica." }, gabarito: "C" },
+    { id: 21, tema: "Farmacodinâmica", dificuldade: "Fácil", pergunta: "O que é afinidade em farmacodinâmica?", alternativas: { A: "Capacidade do fármaco de ser eliminado.", B: "Força de ligação do fármaco ao receptor.", C: "Efeito máximo produzido pelo fármaco.", D: "Velocidade de metabolização.", E: "Quantidade de fármaco necessária para causar toxicidade." }, gabarito: "B" },
+    { id: 22, tema: "Farmacodinâmica", dificuldade: "Fácil", pergunta: "O que diferencia agonistas de antagonistas?", alternativas: { A: "Agonistas bloqueiam receptores; antagonistas ativam.", B: "Agonistas ativam receptores; antagonistas bloqueiam.", C: "Antagonistas são sempre tóxicos.", D: "Agonistas não possuem afinidade.", E: "Antagonistas não se ligam ao receptor." }, gabarito: "B" },
+    { id: 23, tema: "Farmacodinâmica", dificuldade: "Média", pergunta: "Qual é a relação entre potência e dose-resposta?", alternativas: { A: "Maior potência exige maior dose.", B: "Potência não se relaciona com dose.", C: "Fármacos potentes requerem menor dose para o mesmo efeito.", D: "Potência depende apenas do fígado.", E: "Potência é medida apenas pela via intravenosa." }, gabarito: "C" },
+    { id: 24, tema: "Farmacodinâmica", dificuldade: "Média", pergunta: "O que acontece com a curva do agonista na presença de antagonista competitivo?", alternativas: { A: "Desloca para a esquerda.", B: "Desloca para a direita.", C: "Desaparece completamente.", D: "Aumenta o efeito máximo.", E: "Reduz o efeito máximo sem alterar afinidade." }, gabarito: "B" },
+    { id: 25, tema: "Farmacodinâmica", dificuldade: "Difícil", pergunta: "Por que agonistas parciais podem atuar como antagonistas?", alternativas: { A: "Porque não se ligam ao receptor.", B: "Porque ocupam receptores, mas produzem menor resposta que agonistas plenos.", C: "Porque inibem metabolismo hepático.", D: "Porque são rapidamente metabolizados.", E: "Porque se ligam irreversivelmente aos receptores." }, gabarito: "B" },
+    { id: 26, tema: "Neurofarmacologia I", dificuldade: "Fácil", pergunta: "Cite um efeito fisiológico da ativação parassimpática.", alternativas: { A: "Taquicardia.", B: "Midríase.", C: "Aumento da salivação.", D: "Broncodilatação.", E: "Aumento da gliconeogênese." }, gabarito: "C" },
+    { id: 27, tema: "Neurofarmacologia I", dificuldade: "Fácil", pergunta: "O que significa simpaticomimético?", alternativas: { A: "Bloqueia ação simpática.", B: "Estimula ações semelhantes ao sistema simpático.", C: "Estimula apenas receptores muscarínicos.", D: "Inibe neurotransmissão colinérgica.", E: "Ativa exclusivamente receptores beta-3." }, gabarito: "B" },
+    { id: 28, tema: "Neurofarmacologia I", dificuldade: "Média", pergunta: "Por que a atropina causa midríase?", alternativas: { A: "Porque ativa receptores alfa-1.", B: "Porque bloqueia receptores muscarínicos no esfíncter da íris.", C: "Porque inibe receptores adrenérgicos.", D: "Porque estimula acetilcolina.", E: "Porque aumenta noradrenalina na retina." }, gabarito: "B" },
+    { id: 29, tema: "Neurofarmacologia I", dificuldade: "Média", pergunta: "Por que agonistas beta-2 são usados em crises asmáticas?", alternativas: { A: "Porque causam broncoconstrição.", B: "Porque reduzem a produção de muco.", C: "Porque promovem broncodilatação ao relaxar músculo liso.", D: "Porque inibem o sistema nervoso simpático.", E: "Porque aumentam liberação de acetilcolina." }, gabarito: "C" },
+    { id: 30, tema: "Neurofarmacologia I", dificuldade: "Média", pergunta: "Qual a diferença entre receptores nicotínicos e muscarínicos?", alternativas: { A: "Nicotínicos estão no SNC; muscarínicos na junção neuromuscular.", B: "Nicotínicos são metabotrópicos; muscarínicos ionotrópicos.", C: "Nicotínicos são ionotrópicos; muscarínicos metabotrópicos.", D: "Ambos são ionotrópicos.", E: "Ambos são metabotrópicos." }, gabarito: "C" },
+    { id: 31, tema: "Neurofarmacologia I", dificuldade: "Média", pergunta: "Por que betabloqueadores não seletivos podem causar broncoespasmo?", alternativas: { A: "Porque inibem receptores alfa.", B: "Porque bloqueiam receptores muscarínicos.", C: "Porque bloqueiam receptores beta-2 responsáveis por broncodilatação.", D: "Porque estimulam liberação de histamina.", E: "Porque aumentam secreção de muco." }, gabarito: "C" },
+    { id: 32, tema: "Neurofarmacologia I", dificuldade: "Média", pergunta: "Por que a pilocarpina pode ser usada no tratamento do glaucoma?", alternativas: { A: "Porque aumenta pressão intraocular.", B: "Porque causa midríase.", C: "Porque contrai o músculo ciliar e facilita drenagem do humor aquoso.", D: "Porque bloqueia receptores nicotínicos.", E: "Porque reduz produção de humor vítreo." }, gabarito: "C" },
+    { id: 33, tema: "Neurofarmacologia I", dificuldade: "Difícil", pergunta: "Por que a adrenalina é preferida à noradrenalina no choque anafilático?", alternativas: { A: "Porque inibe receptores beta-2.", B: "Porque a noradrenalina causa broncoconstrição.", C: "Porque a adrenalina possui ação broncodilatadora e estabiliza mastócitos.", D: "Porque a noradrenalina aumenta histamina.", E: "Porque adrenalina não eleva pressão arterial." }, gabarito: "C" },
+    { id: 34, tema: "Neurofarmacologia I", dificuldade: "Difícil", pergunta: "Por que anticolinesterásicos podem causar crise colinérgica?", alternativas: { A: "Porque bloqueiam receptores muscarínicos.", B: "Porque inibem liberação de acetilcolina.", C: "Porque aumentam acetilcolina em excesso, estimulando receptores M e N.", D: "Porque reduzem ação parassimpática.", E: "Porque são antagonistas competitivos." }, gabarito: "C" },
+    { id: 35, tema: "Neurofarmacologia II", dificuldade: "Fácil", pergunta: "Qual o mecanismo de ação dos anestésicos locais?", alternativas: { A: "Aumentam influxo de cálcio.", B: "Ativam receptores GABA.", C: "Bloqueiam canais de sódio dependentes de voltagem.", D: "Aumentam liberação de acetilcolina.", E: "Estimulam receptores beta-2." }, gabarito: "C" },
+    { id: 36, tema: "Neurofarmacologia II", dificuldade: "Média", pergunta: "Por que anestésicos locais têm menor eficácia em tecidos inflamados?", alternativas: { A: "Porque não ligam a receptores inflamatórios.", B: "Porque o pH ácido reduz a forma não ionizada do fármaco.", C: "Porque são degradados por enzimas inflamatórias.", D: "Porque não bloqueiam canais de potássio.", E: "Porque o fluxo sanguíneo diminui drasticamente." }, gabarito: "B" },
+    { id: 37, tema: "Neurofarmacologia II", dificuldade: "Média", pergunta: "Qual a diferença entre dependência física e psicológica?", alternativas: { A: "Física envolve sintomas emocionais; psicológica envolve abstinência.", B: "Física envolve tolerância; psicológica envolve apenas intoxicação.", C: "Física envolve adaptação corporal; psicológica envolve desejo compulsivo.", D: "Não existe diferença.", E: "Psicológica ocorre apenas com opioides." }, gabarito: "C" },
+    { id: 38, tema: "Neurofarmacologia II", dificuldade: "Difícil", pergunta: "Por que cocaína e lidocaína compartilham alguns efeitos?", alternativas: { A: "Ambas ativam receptores adrenérgicos.", B: "Ambas bloqueiam canais de cálcio.", C: "Ambas bloqueiam canais de sódio dependentes de voltagem.", D: "Ambas estimulam dopamina.", E: "Porque possuem a mesma fórmula química." }, gabarito: "C" },
+    { id: 39, tema: "Neurofarmacologia II", dificuldade: "Difícil", pergunta: "Por que bloqueadores neuromusculares despolarizantes causam fasciculações?", alternativas: { A: "Porque bloqueiam receptores muscarínicos.", B: "Porque hiperpolarizam a membrana.", C: "Porque despolarizam repetidamente a placa motora antes do bloqueio.", D: "Porque inibem acetilcolina.", E: "Porque ativam adrenalina." }, gabarito: "C" },
+    { id: 40, tema: "Inflamação e Imunidade I", dificuldade: "Fácil", pergunta: "O que são AINEs?", alternativas: { A: "Antibióticos imunossupressores.", B: "Anti-inflamatórios não esteroidais.", C: "Analgésicos narcóticos.", D: "Hormônios anti-inflamatórios.", E: "Esteroides sintéticos." }, gabarito: "B" },
+    { id: 41, tema: "Inflamação e Imunidade I", dificuldade: "Média", pergunta: "Por que AINEs causam irritação gástrica?", alternativas: { A: "Porque reduzem muco gástrico ao inibir COX-1.", B: "Porque aumentam ácido gástrico.", C: "Porque bloqueiam receptores muscarínicos.", D: "Porque são absorvidos lentamente.", E: "Porque aumentam secreção de pepsina." }, gabarito: "A" },
+    { id: 42, tema: "Inflamação e Imunidade I", dificuldade: "Média", pergunta: "Qual a diferença entre COX-1 e COX-2?", alternativas: { A: "COX-1 é induzida; COX-2 é constitutiva.", B: "COX-1 está associada à proteção gástrica; COX-2 à inflamação.", C: "Ambas promovem apenas inflamação.", D: "Ambas promovem apenas proteção gástrica.", E: "COX-2 regula plaquetas." }, gabarito: "B" },
+    { id: 43, tema: "Inflamação e Imunidade I", dificuldade: "Média", pergunta: "Como corticosteroides reduzem inflamação?", alternativas: { A: "Aumentando síntese de prostaglandinas.", B: "Inibindo fosfolipase A2.", C: "Estimulando liberação de histamina.", D: "Inativando receptores de adrenalina.", E: "Aumentando produção de bradicinina." }, gabarito: "B" },
+    { id: 44, tema: "Inflamação e Imunidade I", dificuldade: "Difícil", pergunta: "Por que uso prolongado de corticosteroides suprime o eixo HPA?", alternativas: { A: "Porque aumentam ACTH.", B: "Porque inibem CRH e ACTH por feedback negativo.", C: "Porque estimulam produção adrenal.", D: "Porque aumentam inflamação.", E: "Porque reduzem síntese de aldosterona." }, gabarito: "B" },
+    { id: 45, tema: "Histamina e Bradicinina", dificuldade: "Fácil", pergunta: "O que são anti-histamínicos H1?", alternativas: { A: "Bloqueadores de serotonina.", B: "Inibidores de prostaglandinas.", C: "Antagonistas dos receptores de histamina H1.", D: "Estimuladores de histamina.", E: "Ativadores de receptores muscarínicos." }, gabarito: "C" },
+    { id: 46, tema: "Histamina e Bradicinina", dificuldade: "Média", pergunta: "Por que anti-histamínicos de primeira geração causam sedação?", alternativas: { A: "Porque não atravessam a barreira hematoencefálica.", B: "Porque bloqueiam receptores dopaminérgicos.", C: "Porque atravessam a barreira hematoencefálica e bloqueiam receptores H1 centrais.", D: "Porque estimulam adrenalina.", E: "Porque aumentam acetilcolina." }, gabarito: "C" },
+    { id: 47, tema: "Histamina e Bradicinina", dificuldade: "Média", pergunta: "Qual o papel da bradicinina na inflamação?", alternativas: { A: "Broncodilatação.", B: "Aumento da PA.", C: "Indução de dor e vasodilatação.", D: "Estímulo à agregação plaquetária.", E: "Inibição da permeabilidade vascular." }, gabarito: "C" },
+    { id: 48, tema: "Histamina e Bradicinina", dificuldade: "Difícil", pergunta: "Por que inibidores da ECA podem causar tosse e angioedema?", alternativas: { A: "Porque reduzem prostaglandinas.", B: "Porque aumentam dopamina.", C: "Porque aumentam níveis de bradicinina.", D: "Porque reduzem renina.", E: "Porque aumentam aldosterona." }, gabarito: "C" },
+    { id: 49, tema: "RAM e Interações", dificuldade: "Fácil", pergunta: "O que significa RAM?", alternativas: { A: "Resposta Adversa Mínima.", B: "Reação Alergênica Modular.", C: "Reação Adversa a Medicamento.", D: "Receptor de Alta Modulação.", E: "Redução da Absorção Metabólica." }, gabarito: "C" },
+    { id: 50, tema: "RAM e Interações", dificuldade: "Média", pergunta: "Qual a diferença entre interação farmacocinética e farmacodinâmica?", alternativas: { A: "Cinética afeta ação no receptor; dinâmica afeta absorção.", B: "Dinâmica altera transporte ativo; cinética altera receptores.", C: "Cinética altera ADME; dinâmica altera efeito no receptor.", D: "Cinética ocorre só com antibióticos.", E: "Dinâmica ocorre só com hormônios." }, gabarito: "C" }
+];
+
+export default function App() {
+    const [currentQuestion, setCurrentQuestion] = useState(0);
+    const [selectedOption, setSelectedOption] = useState(null);
+    const [showFeedback, setShowFeedback] = useState(false);
+    const [score, setScore] = useState(0);
+    const [quizFinished, setQuizFinished] = useState(false);
+    
+    // Novo estado para controlar o tempo
+    const [timer, setTimer] = useState(0);
+    
+    // Novo estado para controlar o histórico de respostas (para navegação)
+    // Formato: [{ questionId: 1, userAnswer: 'A', isCorrect: false }, ...]
+    const [history, setHistory] = useState([]);
+
+    // Timer effect
+    useEffect(() => {
+        let interval;
+        if (!quizFinished) {
+            interval = setInterval(() => {
+                setTimer(prev => prev + 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [quizFinished]);
+
+    // Restore state when navigating between questions
+    useEffect(() => {
+        const currentQId = questionsData[currentQuestion].id;
+        const existingAnswer = history.find(h => h.questionId === currentQId);
+
+        if (existingAnswer) {
+            setSelectedOption(existingAnswer.userAnswer);
+            setShowFeedback(true);
+        } else {
+            setSelectedOption(null);
+            setShowFeedback(false);
+        }
+    }, [currentQuestion, history]);
+
+    const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const handleOptionClick = (optionKey) => {
+        if (showFeedback) return;
+        
+        const isCorrect = optionKey === questionsData[currentQuestion].gabarito;
+        setSelectedOption(optionKey);
+        setShowFeedback(true);
+        
+        if (isCorrect) {
+            setScore(prev => prev + 1);
+        }
+
+        // Salva ou atualiza o histórico
+        setHistory(prev => {
+            const newHistory = [...prev];
+            const index = newHistory.findIndex(h => h.questionId === questionsData[currentQuestion].id);
+            const entry = {
+                questionId: questionsData[currentQuestion].id,
+                isCorrect: isCorrect,
+                userAnswer: optionKey,
+                correctAnswer: questionsData[currentQuestion].gabarito
+            };
+
+            if (index >= 0) {
+                newHistory[index] = entry;
+            } else {
+                newHistory.push(entry);
+            }
+            return newHistory;
+        });
+    };
+
+    const nextQuestion = () => {
+        const nextIndex = currentQuestion + 1;
+
+        if (nextIndex < questionsData.length) {
+            setCurrentQuestion(nextIndex);
+        } else {
+            // Verifica se há questões não respondidas (puladas)
+            const unansweredIndex = questionsData.findIndex(q => !history.some(h => h.questionId === q.id));
+            
+            if (unansweredIndex !== -1) {
+                // Se houver questões puladas, volta para a primeira delas
+                // Poderíamos mostrar um alerta, mas o fluxo direto é mais fluido
+                alert("Você tem questões pendentes! Vamos voltar para a primeira questão que você pulou.");
+                setCurrentQuestion(unansweredIndex);
+            } else {
+                setQuizFinished(true);
+            }
+        }
+    };
+
+    const prevQuestion = () => {
+        if (currentQuestion > 0) {
+            setCurrentQuestion(prev => prev - 1);
+        }
+    };
+
+    const skipQuestion = () => {
+        // Apenas avança, não salva nada no histórico (permanece como 'não respondida')
+        nextQuestion();
+    };
+
+    const handleFinishEarly = () => {
+        const answeredCount = history.length;
+        const total = questionsData.length;
+        if (answeredCount < total) {
+            const confirm = window.confirm(
+                `Você respondeu ${answeredCount} de ${total} questões. Deseja realmente finalizar o quiz agora?`
+            );
+            if (confirm) {
+                setQuizFinished(true);
+            }
+        } else {
+            setQuizFinished(true);
+        }
+    };
+
+    const progressPercentage = ((currentQuestion) / questionsData.length) * 100;
+
+    if (quizFinished) {
+        const attemptedCount = history.length;
+        const skippedCount = questionsData.length - attemptedCount;
+        
+        // Cálculo do aproveitamento baseado APENAS nas questões respondidas
+        const accuracyPercentage = attemptedCount > 0 
+            ? ((score / attemptedCount) * 100).toFixed(1) 
+            : 0;
+
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-white font-sans text-slate-800">
+                <div className="max-w-md w-full animate-in fade-in zoom-in duration-500">
+                    <ClipboardCheck className="w-20 h-20 text-emerald-500 mx-auto mb-6" />
+                    <h1 className="text-3xl font-bold mb-2">Quiz Finalizado!</h1>
+                    <div className="flex items-center justify-center gap-2 text-slate-500 mb-6">
+                        <Clock className="w-5 h-5" />
+                        <span>Tempo total: {formatTime(timer)}</span>
+                    </div>
+                    
+                    <div className="bg-slate-100 rounded-xl p-8 mb-8 shadow-inner">
+                        <div className="text-sm text-slate-500 uppercase tracking-wider font-semibold mb-4">Seu Desempenho</div>
+                        
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="bg-white p-3 rounded-lg shadow-sm">
+                                <div className="text-xs text-slate-400">Acertos</div>
+                                <div className="text-2xl font-bold text-emerald-600">{score}</div>
+                            </div>
+                            <div className="bg-white p-3 rounded-lg shadow-sm">
+                                <div className="text-xs text-slate-400">Respondidas</div>
+                                <div className="text-2xl font-bold text-slate-700">{attemptedCount} <span className="text-sm text-slate-400">/ 50</span></div>
+                            </div>
+                        </div>
+
+                        {skippedCount > 0 && (
+                            <div className="text-xs text-amber-600 mb-4 bg-amber-50 py-1 px-2 rounded-full inline-block">
+                                Você pulou {skippedCount} questões
+                            </div>
+                        )}
+
+                        <div className="border-t border-slate-200 pt-4">
+                             <div className="text-sm text-slate-500 mb-1">Aproveitamento (Respondidas)</div>
+                             <div className={`text-4xl font-bold ${Number(accuracyPercentage) >= 70 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                {accuracyPercentage}%
+                            </div>
+                        </div>
+                    </div>
+
+                    <button 
+                        onClick={() => {
+                            setCurrentQuestion(0);
+                            setSelectedOption(null);
+                            setShowFeedback(false);
+                            setScore(0);
+                            setQuizFinished(false);
+                            setHistory([]);
+                            setTimer(0);
+                        }}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-emerald-500/30 flex items-center justify-center gap-2"
+                    >
+                        <RefreshCw className="w-5 h-5" /> Tentar Novamente
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const currentQData = questionsData[currentQuestion];
+    const isAnswered = history.some(h => h.questionId === currentQData.id);
+
+    return (
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col items-center justify-center p-4">
+            <div className="flex flex-col w-full max-w-4xl shadow-2xl bg-white rounded-2xl overflow-hidden min-h-[600px]">
+                
+                {/* Header */}
+                <header className="bg-slate-800 text-white p-4 md:p-6 flex flex-col md:flex-row justify-between items-center z-10 gap-4">
+                    <div className="flex items-center justify-between w-full md:w-auto gap-4">
+                        <div className="flex flex-col">
+                            <h1 className="font-bold text-lg md:text-xl flex items-center gap-2">
+                                <Pill className="text-emerald-400 w-6 h-6" /> Quiz de Farmacologia
+                            </h1>
+                            <span className="text-xs text-slate-400 mt-1">{currentQData.tema}</span>
+                        </div>
+                        
+                        {/* Botão Finalizar Mobile */}
+                        <button 
+                            onClick={handleFinishEarly}
+                            className="md:hidden bg-red-500/20 hover:bg-red-500/40 text-red-200 p-2 rounded-lg transition-colors"
+                            title="Finalizar Quiz Agora"
+                        >
+                            <Power className="w-5 h-5" />
+                        </button>
+                    </div>
+                    
+                    {/* Timer Display */}
+                    <div className="bg-slate-900/50 px-4 py-2 rounded-lg flex items-center gap-2 border border-slate-700">
+                        <Clock className="w-4 h-4 text-emerald-400" />
+                        <span className="font-mono text-lg font-bold tracking-widest">{formatTime(timer)}</span>
+                    </div>
+
+                    <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                        <div className="text-right">
+                            <div className="text-xs text-slate-400 uppercase font-bold tracking-wider">Acertos</div>
+                            <div className="text-xl font-bold text-emerald-400">{score}</div>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                            <div className="bg-slate-700 rounded-lg px-3 py-1 text-sm font-mono border border-slate-600">
+                                {currentQuestion + 1} / {questionsData.length}
+                            </div>
+                            
+                            {/* Botão Finalizar Desktop */}
+                            <button 
+                                onClick={handleFinishEarly}
+                                className="hidden md:flex bg-red-500/20 hover:bg-red-500/40 text-red-200 p-2 rounded-lg transition-colors"
+                                title="Finalizar Quiz Agora"
+                            >
+                                <Power className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                {/* Progress Bar */}
+                <div className="w-full bg-slate-200 h-1.5">
+                    <div 
+                        className="bg-emerald-500 h-1.5 transition-all duration-300 ease-out" 
+                        style={{ width: `${progressPercentage}%` }}
+                    ></div>
+                </div>
+
+                {/* Content Area */}
+                <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50 relative">
+                    <div className="max-w-3xl mx-auto">
+                        
+                        {/* Tags */}
+                        <div className="flex gap-2 mb-4">
+                            <span className={`text-xs font-bold px-2 py-1 rounded text-white ${
+                                currentQData.dificuldade === 'Fácil' ? 'bg-green-500' :
+                                currentQData.dificuldade === 'Média' ? 'bg-yellow-500' : 'bg-red-500'
+                            }`}>
+                                {currentQData.dificuldade}
+                            </span>
+                            {isAnswered && (
+                                <span className="text-xs font-bold px-2 py-1 rounded bg-slate-200 text-slate-600">
+                                    Respondida
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Question Text */}
+                        <h2 className="text-xl md:text-2xl font-semibold text-slate-800 mb-8 leading-relaxed">
+                            {currentQData.pergunta}
+                        </h2>
+
+                        {/* Options */}
+                        <div className="grid gap-3">
+                            {Object.entries(currentQData.alternativas).map(([key, text]) => {
+                                let btnClass = "w-full text-left p-4 rounded-xl border-2 transition-all relative group ";
+                                
+                                if (showFeedback) {
+                                    if (key === currentQData.gabarito) {
+                                        btnClass += "bg-emerald-100 border-emerald-500 text-emerald-900";
+                                    } else if (key === selectedOption && key !== currentQData.gabarito) {
+                                        btnClass += "bg-red-50 border-red-400 text-red-900 opacity-70";
+                                    } else {
+                                        btnClass += "bg-white border-slate-200 text-slate-400";
+                                    }
+                                } else {
+                                    btnClass += "bg-white border-slate-200 hover:border-blue-400 hover:bg-blue-50 text-slate-700 cursor-pointer shadow-sm hover:shadow-md";
+                                }
+
+                                return (
+                                    <button 
+                                        key={key} 
+                                        onClick={() => !isAnswered && handleOptionClick(key)}
+                                        disabled={showFeedback} // Desabilita clique se já mostrou feedback
+                                        className={btnClass}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm border ${
+                                                showFeedback && key === currentQData.gabarito ? 'bg-emerald-500 border-emerald-500 text-white' : 
+                                                showFeedback && key === selectedOption ? 'bg-red-500 border-red-500 text-white' :
+                                                'bg-slate-100 border-slate-300 text-slate-500 group-hover:bg-blue-500 group-hover:border-blue-500 group-hover:text-white'
+                                            }`}>
+                                                {key}
+                                            </div>
+                                            <span className="mt-1">{text}</span>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                    </div>
+                </main>
+
+                {/* Footer / Feedback Action */}
+                <footer className="bg-white p-4 md:p-6 border-t border-slate-100">
+                    <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+                        
+                        {/* Botão Anterior */}
+                        <button 
+                            onClick={prevQuestion}
+                            disabled={currentQuestion === 0}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                                currentQuestion === 0 
+                                ? 'text-slate-300 cursor-not-allowed' 
+                                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                            }`}
+                        >
+                            <ArrowLeft className="w-4 h-4" /> Anterior
+                        </button>
+
+                        {/* Área Central (Feedback ou Pular) */}
+                        {showFeedback ? (
+                            <div className="flex items-center gap-3 animate-in fade-in zoom-in duration-300">
+                                <div className={`flex items-center gap-2 ${selectedOption === currentQData.gabarito ? 'text-emerald-600' : 'text-red-600'}`}>
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                        selectedOption === currentQData.gabarito ? 'bg-emerald-100' : 'bg-red-100'
+                                    }`}>
+                                        {selectedOption === currentQData.gabarito ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                                    </div>
+                                    <span className="font-bold">{selectedOption === currentQData.gabarito ? 'Correto!' : 'Incorreto'}</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <button 
+                                onClick={skipQuestion}
+                                className="flex items-center gap-2 px-6 py-2 rounded-full border border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-all font-medium text-sm"
+                            >
+                                Pular Questão <SkipForward className="w-4 h-4" />
+                            </button>
+                        )}
+
+                        {/* Botão Próxima */}
+                        <button 
+                            onClick={nextQuestion}
+                            className="bg-slate-800 hover:bg-slate-900 text-white px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg shadow-slate-200 min-w-[140px] justify-center"
+                        >
+                            {currentQuestion === questionsData.length - 1 && history.length === questionsData.length 
+                                ? 'Finalizar' 
+                                : 'Próxima'} 
+                            <ArrowRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    );
+}
+```
